@@ -5,14 +5,20 @@
 #define N 8
 #define M 8
 #define NEnRatlla 4
+#define Nivells 2
 
 typedef struct node {
 	struct node * *fills;
 	int n_fills;
-	char tauler[N][N];
-	double valor;
+	char tauler[N][M];
+	int valor;
 } Node;
 
+void OmpleCharDeZeros(char m[M]) {
+    for (j=0;j<M;j++) {
+        m[j]=0;
+    }
+}
 
 void OmpleTaulerDeZeros(char m[N][M]){
     for (int i=0;i<N;i++) {
@@ -323,70 +329,93 @@ int ValoraPosicio (char m[N][M], int ntir, int njug, int nfil, int ncol) {
     return p1-p2;
 }
 
-int ComprobacioFila(char m[N][M], int x, int *nfil, int *ncol) {
+void ColocaFicha(char m[N][M], int x, int njug, int *nfil, int *ncol) {
     for (int i=0;i<N;i++) {
         if (m[i][x-1] == 0) {
             *nfil = i+1;
             *ncol = x;
+        }
+        m[*nfil-1][*ncol-1] = njug;
+        printf("Ficha colocada a la casella (%d,%d) .\n\n", *nfil,*ncol);
+}
+
+int ComprobacioFila(char m[N][M], int x) {
+    for (int i=0;i<N;i++) {
+        if (m[i][x-1] == 0) {
             return 1;
         }
     }
     return 0;
 }
 
-int ComprobacioColumna (char m[N][M], int x, int *nfil, int *ncol) {
-    if (x>0 && x<=M) return ComprobacioFila(m,x,nfil,ncol);
+int ComprobacioColumna (char m[N][M], int x) {
+    if (x>0 && x<=M) return ComprobacioFila(m,x);
     else return -1;
 }
 
 
-void Jugada(char m[N][M], int *ntir, int *njug, int *nfil, int *ncol) {
-    if(*njug==1) {
-        int x,y;
-        while (1) {
-            printf("Juga el Jugador %d\n\nEn quina columna vols posar la ficha (de la 1 a la %d): ",*njug,N);
-            y = LlegirEnter(&x);
-            if(y==0) printf("Error de lectura.\n");
-            else if(y==-1) printf("Error: Columna no valida. Es necessari introduir un unic enter.\n\n");
-            else if(y==1) break;
-        }
-
-
-        if (ComprobacioColumna(m,x,nfil,ncol)==-1) printf("Error: Columna fora del rang (1-%d).\n\n",N);
-        else if (ComprobacioColumna(m,x,nfil,ncol)==0) printf("Error: La columna esta plena.\n\n");
-        else if (ComprobacioColumna(m,x,nfil,ncol)==1) {
-            m[*nfil-1][*ncol-1] = *njug;
-            *ntir = *ntir +1;
-            CambiaJug(njug);
-            ImprimeixTauler(m);
-            printf("Ficha colocada a la casella (%d,%d) .\n\n", *nfil,*ncol);
-        }
+void JugadaHuma(char m[N][M], int *ntir, int *njug, int *nfil, int *ncol) {
+    int x,y;
+    while (1) {
+        printf("Juga el Jugador %d\n\nEn quina columna vols posar la ficha (de la 1 a la %d): ",*njug,N);
+        y = LlegirEnter(&x);
+        if(y==0) printf("Error de lectura.\n");
+        else if(y==-1) printf("Error: Columna no valida. Es necessari introduir un unic enter.\n\n");
+        else if(y==1) break;
     }
-    if(*njug==2) {
-        // JugadaCPU
+
+    if (ComprobacioColumna(m,x)==-1) printf("Error: Columna fora del rang (1-%d).\n\n",N);
+    else if (ComprobacioColumna(m,x)==0) printf("Error: La columna esta plena.\n\n");
+    else if (ComprobacioColumna(m,x)==1) {
+        ColocaFicha(m,x,*njug,nfil,ncol);
+        *ntir = *ntir +1;
+        CambiaJug(njug);
+        ImprimeixTauler(m);
+    }
+}
+
+void AnalitzaFills (char m[N][M], char v[M] ) {
+    int extra1,extra2;
+    for (j=1;j<=M;j++) {
+        if(ComprobacioFila(m,j,&extra1,&extra2)==1) v[j]=1;
+    }
+}
+
+void CreaArbre (Node *p) {
+    for (int nivell=1; nivell<Nivells; nivell++) {
+
     }
 }
 
 
-int main(){
-    Node *
 
-    char tauler[N][M];
-    OmpleTaulerDeZeros(tauler);
+void JugadaCPU(char m[N][M], int x, int *njug, int *nfil, int *ncol) {
+    ColocaFicha(m,x,*njug,nfil,ncol);
+
+}
+
+
+
+int main(){
+    Node a;
+
+    OmpleTaulerDeZeros(a.tauler);
 
     int ntir=0;
     int njug=CaraoCreuInicial();
     int nfil=1;
     int ncol;
     while (1){
-        Jugada(tauler,&ntir,&njug,&nfil,&ncol);
-        printf("ValPosicio = %d\n\n",ValoraPosicio(tauler,ntir,njug,nfil,ncol));
-        if (AcabaPartida(tauler,ntir,njug,nfil,ncol)!=0) break;
+        if(njug==1) JugadaHuma(a.tauler,&ntir,&njug,&nfil,&ncol);
+        else if(njug==2) JugadaCPU();
+        printf("ValPosicio = %d\n\n",ValoraPosicio(a.tauler,ntir,njug,nfil,ncol));
+        if (AcabaPartida(a.tauler,ntir,njug,nfil,ncol)!=0) break;
 
     }
 
     CambiaJug(&njug);
-    if (AcabaPartida(tauler,ntir,njug,nfil,ncol)== 3) printf("Empat, no queden casilles lliures.\n");
-    else printf("Ha guanyat el jugador %d.\n", njug);
+    if (AcabaPartida(a.tauler,ntir,njug,nfil,ncol)== 3) printf("Empat, no queden casilles lliures.\n");
+    else if (njug==1) printf("Ha guanyat el jugador 1.\n");
+    else printf("Ha guanyat la CPU\n");
     return 0;
 }
