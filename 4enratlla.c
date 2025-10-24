@@ -4,18 +4,17 @@
 #include <time.h>
 #define N 8
 #define M 8
-#define NEnRatlla 4
-#define Nivells 2
+#define NENRATLLA 4
+#define NIVELLS 2
 
 typedef struct node {
 	struct node * *fills;
-	int n_fills;
 	char tauler[N][M];
 	int valor;
 } Node;
 
 void OmpleCharDeZeros(char m[M]) {
-    for (j=0;j<M;j++) {
+    for (int j=0;j<M;j++) {
         m[j]=0;
     }
 }
@@ -24,6 +23,14 @@ void OmpleTaulerDeZeros(char m[N][M]){
     for (int i=0;i<N;i++) {
         for(int j=0;j<M;j++){
             m[i][j] = 0;
+        }
+    }
+}
+
+void CopiaTauler(char m[N][M], char n[N][M]) {
+    for (int i=0;i<N;i++) {
+        for(int j=0;j<M;j++){
+            n[i][j] = m[i][j];
         }
     }
 }
@@ -170,21 +177,25 @@ int kEnDiagonalDecreixent (char m[N][M], int njug, int nfil, int ncol, int k, in
     return 0;
 }
 
-int AcabaPartida(char m[N][M],int ntir, int njug, int nfil, int ncol) {
+int AcabaPartida(char m[N][M], int njug, int nfil, int ncol) {
     CambiaJug(&njug);
     int extra1;
     int extra2;
 
-    if(kEnColumna(m,njug,nfil,ncol,NEnRatlla,&extra1)==1) return njug;
+    if(kEnColumna(m,njug,nfil,ncol,NENRATLLA,&extra1)==1) return njug;
 
-    if(kEnFila(m,njug,nfil,ncol,NEnRatlla,&extra2)==1) return njug;
+    if(kEnFila(m,njug,nfil,ncol,NENRATLLA,&extra2)==1) return njug;
 
-    if(kEnDiagonalCreixent(m,njug,nfil,ncol,NEnRatlla,&extra1,&extra2)==1) return njug;
+    if(kEnDiagonalCreixent(m,njug,nfil,ncol,NENRATLLA,&extra1,&extra2)==1) return njug;
 
-    if(kEnDiagonalDecreixent(m,njug,nfil,ncol,NEnRatlla,&extra1,&extra2)==1) return njug;
+    if(kEnDiagonalDecreixent(m,njug,nfil,ncol,NENRATLLA,&extra1,&extra2)==1) return njug;
 
 
-    if (ntir == N*M) return 3;
+    int count=0;
+    for (int j=0;j<M;j++) {
+        if(m[N-1][j]!=0) count++;
+    }
+    if(count == M) return 3;
 
     return 0;
 }
@@ -192,7 +203,7 @@ int AcabaPartida(char m[N][M],int ntir, int njug, int nfil, int ncol) {
 void ValoraColumna (char m[M][N], int njug, int i, int j, int *count) {
     int ffinal;
 
-    for(int t=2; t<NEnRatlla;t++) {
+    for(int t=2; t<NENRATLLA;t++) {
         if(kEnColumna(m,njug,i+1,j+1,t,&ffinal)==1) {
             if(ffinal+1<N && m[ffinal+1][j]==0) *count = *count + 3*t*t;
         }
@@ -202,33 +213,33 @@ void ValoraColumna (char m[M][N], int njug, int i, int j, int *count) {
 void ValoraFila (char m[M][N], int njug, int i, int j, int *count) {
     int cfinal;
 
-    for(int t=2; t<NEnRatlla;t++) {
+    for(int t=2; t<NENRATLLA;t++) {
         if(kEnFila(m,njug,i+1,j+1,t,&cfinal)==1) {
             if(cfinal+1<M && m[i][cfinal+1]==0) {
                 if(i==0) {
-                    if(t==NEnRatlla-2 && cfinal+2<M && m[i][cfinal+2]==njug) *count = *count + 3*(NEnRatlla-1)*(NEnRatlla-1);
+                    if(t==NENRATLLA-2 && cfinal+2<M && m[i][cfinal+2]==njug) *count = *count + 3*(NENRATLLA-1)*(NENRATLLA-1);
                     else *count = *count + 3*t*t;
                 }
                 else if (m[i-1][cfinal+1]!=0) {
-                    if(t==NEnRatlla-2 && cfinal+2<M && m[i][cfinal+2]==njug) *count = *count + 3*(NEnRatlla-1)*(NEnRatlla-1);
+                    if(t==NENRATLLA-2 && cfinal+2<M && m[i][cfinal+2]==njug) *count = *count + 3*(NENRATLLA-1)*(NENRATLLA-1);
                     else *count = *count + 3*t*t;
                 }
                 else {
-                    if(t==NEnRatlla-2 && cfinal+2<M && m[i][cfinal+2]==njug) *count = *count + (NEnRatlla-1)*(NEnRatlla-1);
+                    if(t==NENRATLLA-2 && cfinal+2<M && m[i][cfinal+2]==njug) *count = *count + (NENRATLLA-1)*(NENRATLLA-1);
                     else *count = *count + t*t;
                 }
             }
             if(cfinal-t>=0 && m[i][cfinal-t]==0) {
                 if(i==0) {
-                    if(t==NEnRatlla-2 && cfinal-t-1<M && m[i][cfinal-t-1]==njug) *count = *count + 3*(NEnRatlla-1)*(NEnRatlla-1);
+                    if(t==NENRATLLA-2 && cfinal-t-1<M && m[i][cfinal-t-1]==njug) *count = *count + 3*(NENRATLLA-1)*(NENRATLLA-1);
                     else *count = *count + 3*t*t;
                 }
                 else if (m[i-1][cfinal-t]!=0) {
-                    if(t==NEnRatlla-2 && cfinal-t-1<M && m[i][cfinal-t-1]==njug) *count = *count + 3*(NEnRatlla-1)*(NEnRatlla-1);
+                    if(t==NENRATLLA-2 && cfinal-t-1<M && m[i][cfinal-t-1]==njug) *count = *count + 3*(NENRATLLA-1)*(NENRATLLA-1);
                     else *count = *count + 3*t*t;
                 }
                 else {
-                    if(t==NEnRatlla-2 && cfinal-t-1<M && m[i][cfinal-t-1]==njug) *count = *count + (NEnRatlla-1)*(NEnRatlla-1);
+                    if(t==NENRATLLA-2 && cfinal-t-1<M && m[i][cfinal-t-1]==njug) *count = *count + (NENRATLLA-1)*(NENRATLLA-1);
                     else *count = *count + t*t;
                 }
             }
@@ -241,26 +252,26 @@ void ValoraDiagonalCreixent (char m[N][M], int njug, int i, int j, int *count) {
     int ffinal;
     int cfinal;
 
-    for(int t=2;t<NEnRatlla;t++) {
+    for(int t=2;t<NENRATLLA;t++) {
         if(kEnDiagonalCreixent(m,njug,i+1,j+1,t,&ffinal,&cfinal)==1) {
             if(ffinal+1<N && cfinal+1<M && m[ffinal+1][cfinal+1]==0) {
                 if(m[ffinal][cfinal+1]!=0) {
-                    if(t==NEnRatlla-2 && ffinal+2<N && cfinal+2<M && m[ffinal+2][cfinal+2]==njug) *count = *count + 3*(NEnRatlla-1)*(NEnRatlla-1);
+                    if(t==NENRATLLA-2 && ffinal+2<N && cfinal+2<M && m[ffinal+2][cfinal+2]==njug) *count = *count + 3*(NENRATLLA-1)*(NENRATLLA-1);
                     else *count = *count + 3*t*t;
                 }
                 else {
-                    if(t==NEnRatlla-2 && ffinal+2<N && cfinal+2<M && m[ffinal+2][cfinal+2]==njug) *count = *count + (NEnRatlla-1)*(NEnRatlla-1);
+                    if(t==NENRATLLA-2 && ffinal+2<N && cfinal+2<M && m[ffinal+2][cfinal+2]==njug) *count = *count + (NENRATLLA-1)*(NENRATLLA-1);
                     else *count = *count + t*t;
                 }
             }
             if(ffinal-t>=0 && cfinal-t>=0 && m[ffinal-t][cfinal-t]==0) {
                 if(ffinal-t==0) *count = *count + 3*t*t;
                 else if (m[ffinal-t-1][cfinal-t]!=0) {
-                    if(t==NEnRatlla-2 && cfinal-t-1>=0 && m[ffinal-t-1][cfinal-t-1]==njug) *count = *count + 3*(NEnRatlla-1)*(NEnRatlla-1);
+                    if(t==NENRATLLA-2 && cfinal-t-1>=0 && m[ffinal-t-1][cfinal-t-1]==njug) *count = *count + 3*(NENRATLLA-1)*(NENRATLLA-1);
                     else *count = *count + 3*t*t;
                 }
                 else {
-                    if(t==NEnRatlla-2 && cfinal-t-1>=0 && m[ffinal-t-1][cfinal-t-1]==njug) *count = *count + (NEnRatlla-1)*(NEnRatlla-1);
+                    if(t==NENRATLLA-2 && cfinal-t-1>=0 && m[ffinal-t-1][cfinal-t-1]==njug) *count = *count + (NENRATLLA-1)*(NENRATLLA-1);
                     else *count = *count + t*t;
                 }
             }
@@ -272,26 +283,26 @@ void ValoraDiagonalDecreixent(char m[N][M], int njug, int i, int j, int *count) 
     int ffinal;
     int cfinal;
 
-        for(int t=2;t<NEnRatlla;t++) {
+        for(int t=2;t<NENRATLLA;t++) {
             if(kEnDiagonalDecreixent(m,njug,i+1,j+1,t,&ffinal,&cfinal)==1) {
                 if(ffinal-1>=0 && cfinal+1<M && m[ffinal-1][cfinal+1]==0) {
                     if(ffinal-1==0) *count = *count + 3*t*t;
                     else if (m[ffinal-2][cfinal+1]!=0) {
-                        if(t==NEnRatlla-2 && cfinal+2<M && m[ffinal-2][cfinal+2]==njug) *count = *count + 3*(NEnRatlla-1)*(NEnRatlla-1);
+                        if(t==NENRATLLA-2 && cfinal+2<M && m[ffinal-2][cfinal+2]==njug) *count = *count + 3*(NENRATLLA-1)*(NENRATLLA-1);
                         else *count = *count + 3*t*t;
                     }
                     else {
-                        if(t==NEnRatlla-2 && cfinal+2<M && m[ffinal-2][cfinal+2]==njug) *count = *count + (NEnRatlla-1)*(NEnRatlla-1);
+                        if(t==NENRATLLA-2 && cfinal+2<M && m[ffinal-2][cfinal+2]==njug) *count = *count + (NENRATLLA-1)*(NENRATLLA-1);
                         else *count = *count + t*t;
                     }
                 }
                 if(ffinal+t<N && cfinal-t>=0 && m[ffinal+1][cfinal-t]==0) {
                     if(m[ffinal+t-1][cfinal-t]!=0) {
-                        if(t==NEnRatlla-2 && ffinal+t+1<N && cfinal-t-1>=0 && m[ffinal+t+1][cfinal-t-1]==njug) *count = *count + 3*(NEnRatlla-1)*(NEnRatlla-1);
+                        if(t==NENRATLLA-2 && ffinal+t+1<N && cfinal-t-1>=0 && m[ffinal+t+1][cfinal-t-1]==njug) *count = *count + 3*(NENRATLLA-1)*(NENRATLLA-1);
                         else *count = *count + 3*t*t;
                     }
                     else {
-                        if(t==NEnRatlla-2 && ffinal+t+1<N && cfinal-t-1>=0 && m[ffinal+t+1][cfinal-t-1]==njug) *count = *count + (NEnRatlla-1)*(NEnRatlla-1);
+                        if(t==NENRATLLA-2 && ffinal+t+1<N && cfinal-t-1>=0 && m[ffinal+t+1][cfinal-t-1]==njug) *count = *count + (NENRATLLA-1)*(NENRATLLA-1);
                         else *count = *count + t*t;
                     }
                 }
@@ -299,7 +310,11 @@ void ValoraDiagonalDecreixent(char m[N][M], int njug, int i, int j, int *count) 
         }
 }
 
-int PuntsPosicioJug (char m[M][N], int njug) {
+int PuntsPosicioJug (char m[M][N], int njug, int nfil, int ncol) {
+    
+    if(AcabaPartida(m,njug,nfil,ncol)!=0) return INT_MAX;
+    if(AcabaPartida(m,njug,nfil,ncol)==3) return 0;
+    
     int count=0;
 
     for (int i=0;i<N;i++) {
@@ -315,18 +330,14 @@ int PuntsPosicioJug (char m[M][N], int njug) {
     return count;
 }
 
-int ValoraPosicio (char m[N][M], int ntir, int njug, int nfil, int ncol) {
+int ValoraPosicioCPU (char m[N][M], int nfil, int ncol) {
+    int njug=1;
 
-    if(AcabaPartida(m,ntir,njug,nfil,ncol)!=0) return INT_MAX;
-    if(AcabaPartida(m,ntir,njug,nfil,ncol)==3) return 5;
-
+    int p1=PuntsPosicioJug(m,njug,nfil,ncol);
     CambiaJug(&njug);
+    int p2=PuntsPosicioJug(m,njug,nfil,ncol);
 
-    int p1=PuntsPosicioJug(m,njug);
-    CambiaJug(&njug);
-    int p2=PuntsPosicioJug(m,njug);
-
-    return p1-p2;
+    return p2-p1;
 }
 
 void ColocaFicha(char m[N][M], int x, int njug, int *nfil, int *ncol) {
@@ -337,6 +348,7 @@ void ColocaFicha(char m[N][M], int x, int njug, int *nfil, int *ncol) {
         }
         m[*nfil-1][*ncol-1] = njug;
         printf("Ficha colocada a la casella (%d,%d) .\n\n", *nfil,*ncol);
+    }
 }
 
 int ComprobacioFila(char m[N][M], int x) {
@@ -354,7 +366,7 @@ int ComprobacioColumna (char m[N][M], int x) {
 }
 
 
-void JugadaHuma(char m[N][M], int *ntir, int *njug, int *nfil, int *ncol) {
+void JugadaHuma(char m[N][M], int *njug, int *nfil, int *ncol) {
     int x,y;
     while (1) {
         printf("Juga el Jugador %d\n\nEn quina columna vols posar la ficha (de la 1 a la %d): ",*njug,N);
@@ -368,29 +380,71 @@ void JugadaHuma(char m[N][M], int *ntir, int *njug, int *nfil, int *ncol) {
     else if (ComprobacioColumna(m,x)==0) printf("Error: La columna esta plena.\n\n");
     else if (ComprobacioColumna(m,x)==1) {
         ColocaFicha(m,x,*njug,nfil,ncol);
-        *ntir = *ntir +1;
         CambiaJug(njug);
         ImprimeixTauler(m);
     }
 }
 
+Node* creaNode(Node *pare,int numDeFill) {
+    int extra1,extra2;
+	Node *p=malloc(sizeof(Node));
+    CopiaTauler(pare->tauler, p->tauler);
+	ColocaFicha(p->tauler,numDeFill, 2, &extra1, &extra2);
+	p->valor=ValoraPosicio(p->tauler);
+	p->fills=malloc( M * sizeof(Node*));
+	return p;
+}
+
 void AnalitzaFills (char m[N][M], char v[M] ) {
     int extra1,extra2;
-    for (j=1;j<=M;j++) {
+    for (j=0;j<M;j++) {
         if(ComprobacioFila(m,j,&extra1,&extra2)==1) v[j]=1;
     }
 }
 
-void CreaArbre (Node *p) {
-    for (int nivell=1; nivell<Nivells; nivell++) {
-
-    }
+void creaNivell(Node *pare) {
+    char v[M];
+    OmpleCharDeZeros(v);
+	for(int i=0 ; i<M ; i++) {
+        AnalitzaFills(pare->tauler, v);
+        if(v[i]==1) pare->fills[i] = creaNode(pare,i);
+	}
 }
 
+void CreaArbre (Node *p) {
+    int count=0;
+    while(1) {
+        nivell=1;
+        creaNivell(p);
+        count = count + 1;
+        if(count==NIVELLS) break;
+        for(int i=0 ; i<M ; i++) {
+            nivell=2;
+            creaNivell(p->fills[i]);
+            CreaArbre(p->fills[i]);
+        }
+        count = count + 1;
+        if(count==NIVELLS) break;
+    }
 
+}
 
-void JugadaCPU(char m[N][M], int x, int *njug, int *nfil, int *ncol) {
-    ColocaFicha(m,x,*njug,nfil,ncol);
+Node* SeleccionaMillorFillMinMax (Node *p) {
+    Node *c;
+    CopiaTauler(p->tauler,c->tauler)
+    char v[M];
+    char val[M];
+    AnalitzaFills(c->tauler,v);
+    for(int i=0; i<M; i++ ) {
+        if(v[i]==1) val[i] = p->valor + p->fills[i]->valor
+    }
+    return c;
+}
+
+void JugadaCPU(Node *a) {
+    CreaArbre(a);
+    int count=0;
+    for ()
 
 }
 
@@ -401,20 +455,19 @@ int main(){
 
     OmpleTaulerDeZeros(a.tauler);
 
-    int ntir=0;
     int njug=CaraoCreuInicial();
     int nfil=1;
     int ncol;
     while (1){
-        if(njug==1) JugadaHuma(a.tauler,&ntir,&njug,&nfil,&ncol);
-        else if(njug==2) JugadaCPU();
-        printf("ValPosicio = %d\n\n",ValoraPosicio(a.tauler,ntir,njug,nfil,ncol));
-        if (AcabaPartida(a.tauler,ntir,njug,nfil,ncol)!=0) break;
+        if(njug==1) JugadaHuma(a.tauler,&njug,&nfil,&ncol);
+        else if(njug==2) JugadaCPU(&a);
+        printf("ValPosicio = %d\n\n",ValoraPosicio(a.tauler,njug,nfil,ncol));
+        if (AcabaPartida(a.tauler,njug,nfil,ncol)!=0) break;
 
     }
 
     CambiaJug(&njug);
-    if (AcabaPartida(a.tauler,ntir,njug,nfil,ncol)== 3) printf("Empat, no queden casilles lliures.\n");
+    if (AcabaPartida(a.tauler,njug,nfil,ncol)== 3) printf("Empat, no queden casilles lliures.\n");
     else if (njug==1) printf("Ha guanyat el jugador 1.\n");
     else printf("Ha guanyat la CPU\n");
     return 0;
