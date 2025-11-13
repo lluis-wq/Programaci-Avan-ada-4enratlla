@@ -5,12 +5,15 @@
 #define N 8
 #define M 8
 #define NENRATLLA 4
-#define NIVELLS 2
 
 typedef struct node {
 	struct node * *fills;
+    int n_fills;
+    char v_fills[M];
 	char tauler[N][M];
 	int valor;
+    int nfil;
+    int ncol;
 } Node;
 
 void OmpleCharDeZeros(char m[M]) {
@@ -19,11 +22,23 @@ void OmpleCharDeZeros(char m[M]) {
     }
 }
 
+void OmpleCharDeUns(char m[M]) {
+    for (int j=0;j<M;j++) {
+        m[j]=1;
+    }
+}
+
 void OmpleTaulerDeZeros(char m[N][M]){
     for (int i=0;i<N;i++) {
         for(int j=0;j<M;j++){
             m[i][j] = 0;
         }
+    }
+}
+
+void CopiaChar (char v[M], char w[M]) {
+    for (int j=0;j<M;j++) {
+        w[j] = v[j];
     }
 }
 
@@ -36,7 +51,7 @@ void CopiaTauler(char m[N][M], char n[N][M]) {
 }
 
 void ImprimeixTauler(char m[N][M]) {
-
+    printf("Imprimim tauler...\n");
     char t[N][M];
     for(int i=0;i<N;i++) {
         for(int j=0;j<M;j++) {
@@ -59,6 +74,70 @@ void ImprimeixTauler(char m[N][M]) {
         printf(" \n");
     }
     printf(" \n\n");
+}
+
+int TrobaMaximIndex(Node p) {
+    int index;
+    int valor=INT_MIN;
+    for (int i=0;i<M;i++) {
+        if(p.fills[i]!=NULL) {
+            if(p.fills[i]->valor >= valor) {
+                index = i;
+                valor = p.fills[i]->valor;
+            }
+        }
+    }
+    return index;
+}
+
+int TrobaMinimIndex(Node p) {
+    int index;
+    int valor=INT_MAX;
+    for (int i=0;i<M;i++) {
+        if(p.fills[i]!=NULL) {
+            if(p.fills[i]->valor <= valor) {
+                index = i;
+                valor = p.fills[i]->valor;
+            }
+        }
+    }
+    return index;
+}
+
+int TrobaMaximValor(Node p) {
+    int valor=INT_MIN;
+    for (int i=0;i<M;i++) {
+        if(p.fills[i]!=NULL) {
+            if(p.fills[i]->valor >= valor) {
+                valor = p.fills[i]->valor;
+            }
+        }
+    }
+    return valor;
+}
+
+int TrobaMinimValor(Node p) {
+    int valor=INT_MAX;
+    for (int i=0;i<M;i++) {
+        if(p.fills[i]!=NULL) {
+            if(p.fills[i]->valor <= valor) {
+                valor = p.fills[i]->valor;
+            }
+        }
+    }
+    return valor;
+}
+
+int GuanyemSegMov(Node p) {
+    for (int i=0;i<M;i++) {
+        if(p.fills[i]!=NULL) {
+            if(p.fills[i]->valor == INT_MAX) {
+                return i;
+                
+            }
+        }
+    }
+    return 0;
 }
 
 int LlegirEnter (int *n) {
@@ -102,11 +181,45 @@ int CaraoCreuInicial () {
         else if (y==0) printf("Error de lectura.\n");
     }
 
-    if(r==1) printf("ha sortit CARA.\n\nPer tant, ");
-    else if(r==2) printf("ha sortit CREU.\n\nPer tant, ");
+    if(r==1 && x==1) printf("ha sortit CARA. Per tant, en primer lloc juga l'huma.\n\n");
+    else if(r==2 && x==1) printf("ha sortit CREU. Per tant, en primer lloc juga la CPU.\n\n");
+    else if(r==1 && x==2) printf("ha sortit CARA. Per tant en primer lloc juga la CPU.\n\n");
+    else printf("ha sortit CREU. Per tant, en primer lloc juga l'huma.\n\n");
 
     if (x==r) return 1;
     else return 2;
+}
+
+int TriaModeDificultat() {
+    int x,y,z;
+    printf("Quin mode de dificultat vols per a la CPU?\n\n   - Facil\n   - Normal\n   - Dificil\n   - Impossible\n\n");
+    while (1) {
+        printf("Escriu 1 si vols el Mode Facil, 2 si vols el Mode Normal, 3 si vols el Mode Dificil i 4 si vols el Mode Impossible: ");
+        y=LlegirEnter(&x);
+
+        if(y==1) {
+            if (x==1) {
+                printf("\nHas escollit el Mode Facil.\n\n");
+                break;
+            }
+            else if (x==2) {
+                printf("\nHas escollit el Mode Normal.\n\n");
+                break;
+            }
+            else if (x==3) {
+                printf("\nHas escollit el Mode Dificil.\n\n");
+                break;
+            }
+            else if (x==4) {
+                printf("\nHas escollit el Mode Impossible.\n\n");
+                break;
+            }
+            else printf("No has introduit 1, 2, 3 o 4.\n\n");
+        }
+        else if (y==-1) printf("Error: No has introduit un enter.\n\n");
+        else if (y==0) printf("Error de lectura.\n");
+    }
+    return x;
 }
 
 void CambiaJug (int *njug) {
@@ -119,7 +232,7 @@ int kEnColumna (char m[N][M], int njug, int nfil, int ncol, int k, int *ffinal) 
     int n=0;
 
     for (int i=1; i<2*k;i++) {
-        if(nfil-1-k+i<0 || ncol-1-k+i>=N) n=0;
+        if(nfil-1-k+i<0 || nfil-1-k+i>=N) n=0;
         else if(m[nfil-1-k+i][ncol-1]==njug) n=n+1;
         else n=0;
         if (n==k) {
@@ -165,11 +278,11 @@ int kEnDiagonalDecreixent (char m[N][M], int njug, int nfil, int ncol, int k, in
     int n=0;
 
     for (int i=1; i<2*k;i++) {
-        if (nfil-1-k+i<0 || nfil-1-k+i>=N || ncol-1-k+i<0 || ncol-1-k+i>=M) n=0;
+        if (nfil-1+k-i<0 || nfil-1+k-i>=N || ncol-1-k+i<0 || ncol-1-k+i>=M) n=0;
         else if(m[nfil-1+k-i][ncol-1-k+i]==njug) n=n+1;
         else n=0;
         if (n==k) {
-            *ffinal=nfil-1-k+i;
+            *ffinal=nfil-1+k-i;
             *cfinal=ncol-1+k-i;
             return 1;
         }
@@ -200,7 +313,7 @@ int AcabaPartida(char m[N][M], int njug, int nfil, int ncol) {
     return 0;
 }
 
-void ValoraColumna (char m[M][N], int njug, int i, int j, int *count) {
+void ValoraColumna (char m[N][M], int njug, int i, int j, int *count) {
     int ffinal;
 
     for(int t=2; t<NENRATLLA;t++) {
@@ -210,7 +323,7 @@ void ValoraColumna (char m[M][N], int njug, int i, int j, int *count) {
     }
 }
 
-void ValoraFila (char m[M][N], int njug, int i, int j, int *count) {
+void ValoraFila (char m[N][M], int njug, int i, int j, int *count) {
     int cfinal;
 
     for(int t=2; t<NENRATLLA;t++) {
@@ -310,16 +423,13 @@ void ValoraDiagonalDecreixent(char m[N][M], int njug, int i, int j, int *count) 
         }
 }
 
-int PuntsPosicioJug (char m[M][N], int njug, int nfil, int ncol) {
-    
-    if(AcabaPartida(m,njug,nfil,ncol)!=0) return INT_MAX;
-    if(AcabaPartida(m,njug,nfil,ncol)==3) return 0;
-    
+int PuntsPosicioJug (char m[N][M], int njug, int nfil, int ncol) {
     int count=0;
 
     for (int i=0;i<N;i++) {
         for(int j=0;j<M;j++){
             if(m[i][j]==njug) {
+                if(AcabaPartida(m,3-njug,i,j)!=0) return INT_MAX;
                 ValoraColumna(m,njug,i,j,&count);
                 ValoraFila(m,njug,i,j,&count);
                 ValoraDiagonalCreixent(m,njug,i,j,&count);
@@ -331,24 +441,27 @@ int PuntsPosicioJug (char m[M][N], int njug, int nfil, int ncol) {
 }
 
 int ValoraPosicioCPU (char m[N][M], int nfil, int ncol) {
-    int njug=1;
-
-    int p1=PuntsPosicioJug(m,njug,nfil,ncol);
-    CambiaJug(&njug);
-    int p2=PuntsPosicioJug(m,njug,nfil,ncol);
+    
+    int p1=PuntsPosicioJug(m,1,nfil,ncol);
+    int p2=PuntsPosicioJug(m,2,nfil,ncol);
 
     return p2-p1;
 }
 
-void ColocaFicha(char m[N][M], int x, int njug, int *nfil, int *ncol) {
+void ColocaFitxa(char m[N][M], int x, int njug, int *nfil, int *ncol) {
     for (int i=0;i<N;i++) {
         if (m[i][x-1] == 0) {
             *nfil = i+1;
             *ncol = x;
+            break;
         }
-        m[*nfil-1][*ncol-1] = njug;
-        printf("Ficha colocada a la casella (%d,%d) .\n\n", *nfil,*ncol);
     }
+    m[*nfil-1][*ncol-1] = njug;
+}
+
+void MissatgeColocaFitxa(int njug, int nfil, int ncol) {
+    if (njug == 1) printf("El Jugador huma coloca la fitxa a la casella (%d,%d) .\n\n", nfil,ncol);
+    else printf("La CPU coloca la fitxa a la casella (%d,%d) .\n\n", nfil,ncol);
 }
 
 int ComprobacioFila(char m[N][M], int x) {
@@ -369,7 +482,7 @@ int ComprobacioColumna (char m[N][M], int x) {
 void JugadaHuma(char m[N][M], int *njug, int *nfil, int *ncol) {
     int x,y;
     while (1) {
-        printf("Juga el Jugador %d\n\nEn quina columna vols posar la ficha (de la 1 a la %d): ",*njug,N);
+        printf("Torn del Jugador huma:\n\nEn quina columna vols posar la ficha (de la 1 a la %d): ",M);
         y = LlegirEnter(&x);
         if(y==0) printf("Error de lectura.\n");
         else if(y==-1) printf("Error: Columna no valida. Es necessari introduir un unic enter.\n\n");
@@ -379,96 +492,180 @@ void JugadaHuma(char m[N][M], int *njug, int *nfil, int *ncol) {
     if (ComprobacioColumna(m,x)==-1) printf("Error: Columna fora del rang (1-%d).\n\n",N);
     else if (ComprobacioColumna(m,x)==0) printf("Error: La columna esta plena.\n\n");
     else if (ComprobacioColumna(m,x)==1) {
-        ColocaFicha(m,x,*njug,nfil,ncol);
-        CambiaJug(njug);
+        ColocaFitxa(m,x,*njug,nfil,ncol);
         ImprimeixTauler(m);
+        MissatgeColocaFitxa(*njug,*nfil,*ncol);
+        CambiaJug(njug);
     }
 }
 
-Node* creaNode(Node *pare,int numDeFill) {
-    int extra1,extra2;
+void AnalitzaFills (char m[N][M], char v[M], int *n) {
+    int count = 0;
+    for (int j=0;j<M;j++) {
+        if(ComprobacioFila(m,j+1)==1) {
+            v[j]=1;
+            count = count + 1;
+        }
+    }
+    *n = count;
+}
+
+Node* creaNode(Node *pare,int numDeFill, int njug, int k, int nivells) {
 	Node *p=malloc(sizeof(Node));
     CopiaTauler(pare->tauler, p->tauler);
-	ColocaFicha(p->tauler,numDeFill, 2, &extra1, &extra2);
-	p->valor=ValoraPosicio(p->tauler);
-	p->fills=malloc( M * sizeof(Node*));
+	ColocaFitxa(p->tauler,numDeFill+1, njug, &(p->nfil), &(p->ncol));
+	p->valor=ValoraPosicioCPU(p->tauler,p->nfil,p->ncol);
+	if(k < nivells - 1) {
+        OmpleCharDeZeros(p->v_fills);
+        int n;
+        AnalitzaFills(p->tauler,p->v_fills,&n);
+        p->n_fills = n;
+        p->fills=malloc( M * sizeof(Node*));
+	}
+	else {
+        p->n_fills = 0;
+        p->fills=NULL;
+	}
 	return p;
 }
 
-void AnalitzaFills (char m[N][M], char v[M] ) {
-    int extra1,extra2;
-    for (j=0;j<M;j++) {
-        if(ComprobacioFila(m,j,&extra1,&extra2)==1) v[j]=1;
-    }
-}
-
-void creaNivell(Node *pare) {
-    char v[M];
-    OmpleCharDeZeros(v);
-	for(int i=0 ; i<M ; i++) {
-        AnalitzaFills(pare->tauler, v);
-        if(v[i]==1) pare->fills[i] = creaNode(pare,i);
-	}
-}
-
-void CreaArbre (Node *p) {
-    int count=0;
-    while(1) {
-        nivell=1;
-        creaNivell(p);
-        count = count + 1;
-        if(count==NIVELLS) break;
+void creaNivell(Node *pare, int k, int nivells) {
+    OmpleCharDeZeros(pare->v_fills);
+    AnalitzaFills(pare->tauler, pare->v_fills, &(pare->n_fills));
+    if (pare->n_fills > 0) {
+        pare->fills = malloc(M * sizeof(Node*));
+        int njug;
+        if ((k+2)%2 == 0) njug = 2;
+        else njug = 1;
         for(int i=0 ; i<M ; i++) {
-            nivell=2;
-            creaNivell(p->fills[i]);
-            CreaArbre(p->fills[i]);
+            if(pare->v_fills[i]==1) {
+                pare->fills[i] = creaNode(pare,i,njug,k,nivells);
+            }
+            else pare->fills[i] = NULL;
         }
-        count = count + 1;
-        if(count==NIVELLS) break;
+    }
+}
+
+void CreaArbreRec (Node *p, int k, int nivells) {
+    creaNivell(p,k,nivells);
+    if(k<nivells-1) {
+        for (int i=0; i<M; i++) {
+            if(p->v_fills[i]==1 && p->fills[i]!= NULL) CreaArbreRec(p->fills[i],k+1,nivells);
+        }
+    }
+}
+
+void ModeFacilRandom (Node *p, int *njug) {
+    int r=rand() % M + 1;
+    ColocaFitxa(p->tauler,r,2,&(p->nfil),&(p->ncol));
+    ImprimeixTauler(p->tauler);
+    MissatgeColocaFitxa(*njug,p->nfil,p->ncol);
+    CambiaJug(njug);
+}
+
+int TriaNodeUnNivell(Node *a) {
+    int index;
+    int valor=INT_MIN;
+    if(a->nfil==-1) {
+        index=rand() % M;
+    }
+    else index = TrobaMaximIndex(*a);
+    return index;
+}
+
+void ModeNormalUnNivell(Node *p, int *njug) {
+    int k=0;
+    int nivells=1;
+    CreaArbreRec(p,k,nivells);
+    int index = TriaNodeUnNivell(p);
+    *p=*(p->fills[index]);
+    ImprimeixTauler(p->tauler);
+    MissatgeColocaFitxa(*njug,p->nfil,p->ncol);
+    CambiaJug(njug);
+}
+
+void RecorreArbreRec(Node *p, int nivells, int n) {
+    if(n==nivells || p->n_fills==0) {
+        return;
+    }
+    for(int i=0; i<M; i++) {
+            if(p->fills[i]!=NULL) RecorreArbreRec(p->fills[i],nivells,n+1);
+        }
+    if(n>0) {
+        if(n%2 == 1) p->valor=TrobaMinimValor(*p);
+        else p->valor=TrobaMaximValor(*p);
     }
 
 }
 
-Node* SeleccionaMillorFillMinMax (Node *p) {
-    Node *c;
-    CopiaTauler(p->tauler,c->tauler)
-    char v[M];
-    char val[M];
-    AnalitzaFills(c->tauler,v);
-    for(int i=0; i<M; i++ ) {
-        if(v[i]==1) val[i] = p->valor + p->fills[i]->valor
+void ModeDificilMinMax(Node *p, int *njug, int nivells) {
+    int k=0;
+    CreaArbreRec(p,k,nivells);
+    int index;
+    if(GuanyemSegMov(*p)!=0) index=GuanyemSegMov(*p);
+    else { 
+        RecorreArbreRec(p,nivells,0);
+        for (int i=0; i<M; i++) {
+        if (p->fills[i] != NULL) printf("Columna %d: valor %d\n", i+1, p->fills[i]->valor);
+        }
+        index = TrobaMaximIndex(*p);
     }
-    return c;
+
+    *p=*(p->fills[index]);
+    ImprimeixTauler(p->tauler);
+    MissatgeColocaFitxa(*njug,p->nfil,p->ncol);
+    CambiaJug(njug);
 }
 
-void JugadaCPU(Node *a) {
-    CreaArbre(a);
-    int count=0;
-    for ()
+void JugadaCPU(Node *a, int *njug, int dificultat) {
+    printf("Torn de la CPU:\n\n");
+    if(dificultat==1) {
+        ModeFacilRandom(a,njug);
+    }
+    if(dificultat==2) {
+        ModeNormalUnNivell(a,njug);
+    }
+    if(dificultat==3) {
+        int nivells=2;
+        ModeDificilMinMax(a,njug,nivells);
+    }
+    if(dificultat==4) {
+        int nivells=6;
+        ModeDificilMinMax(a,njug,nivells);
+    }
 
 }
 
+void InicialitzaNode(Node *p) {
+    OmpleTaulerDeZeros(p->tauler);
+    p->nfil=-1;
+    p->valor = 0;
+}
 
+void JugaPartida(Node *a, int *njug, int dificultat) {
+    printf("El jugador huma juga amb creus 'x' i la CPU amb cercles 'o'.\n\nInicia la partida:\n\n");
+    while (1){
+        if(*njug==1) JugadaHuma(a->tauler,njug,&(a->nfil),&(a->ncol));
+        else if(*njug==2) JugadaCPU(a,njug,dificultat);
+        if (AcabaPartida(a->tauler,*njug,a->nfil,a->ncol)!=0) break;
+    }
+}
+
+void FinalitzaPartida(Node a, int njug) {
+    CambiaJug(&njug);
+    if (AcabaPartida(a.tauler,njug,a.nfil,a.ncol)== 3) printf("Empat, no queden casilles lliures.\n");
+    else if (njug==1) printf("Ha guanyat el jugador huma.\n");
+    else printf("Ha guanyat la CPU\n");
+}
 
 int main(){
     Node a;
-
-    OmpleTaulerDeZeros(a.tauler);
-
+    InicialitzaNode(&a);
+    int dificultat = TriaModeDificultat();
     int njug=CaraoCreuInicial();
-    int nfil=1;
-    int ncol;
-    while (1){
-        if(njug==1) JugadaHuma(a.tauler,&njug,&nfil,&ncol);
-        else if(njug==2) JugadaCPU(&a);
-        printf("ValPosicio = %d\n\n",ValoraPosicio(a.tauler,njug,nfil,ncol));
-        if (AcabaPartida(a.tauler,njug,nfil,ncol)!=0) break;
+    JugaPartida(&a,&njug,dificultat);
 
-    }
+    FinalitzaPartida(a,njug);
 
-    CambiaJug(&njug);
-    if (AcabaPartida(a.tauler,njug,nfil,ncol)== 3) printf("Empat, no queden casilles lliures.\n");
-    else if (njug==1) printf("Ha guanyat el jugador 1.\n");
-    else printf("Ha guanyat la CPU\n");
     return 0;
 }
