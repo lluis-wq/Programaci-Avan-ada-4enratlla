@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <time.h>
-#define N 8
-#define M 8
+#define N 10
+#define M 10
 #define NENRATLLA 4
 
 typedef struct node {
@@ -133,7 +133,7 @@ int GuanyemSegMov(Node p) {
         if(p.fills[i]!=NULL) {
             if(p.fills[i]->valor == INT_MAX) {
                 return i;
-                
+
             }
         }
     }
@@ -423,13 +423,16 @@ void ValoraDiagonalDecreixent(char m[N][M], int njug, int i, int j, int *count) 
         }
 }
 
-int PuntsPosicioJug (char m[N][M], int njug, int nfil, int ncol) {
+int PuntsPosicioJug (char m[N][M], int njug) {
     int count=0;
 
     for (int i=0;i<N;i++) {
         for(int j=0;j<M;j++){
             if(m[i][j]==njug) {
-                if(AcabaPartida(m,3-njug,i,j)!=0) return INT_MAX;
+                int resultat = AcabaPartida(m,3-njug,i+1,j+1);
+                if(resultat == njug) return INT_MAX;
+                else if(resultat == 3-njug) return INT_MIN;
+                else if(resultat ==3) return 0;
                 ValoraColumna(m,njug,i,j,&count);
                 ValoraFila(m,njug,i,j,&count);
                 ValoraDiagonalCreixent(m,njug,i,j,&count);
@@ -440,10 +443,10 @@ int PuntsPosicioJug (char m[N][M], int njug, int nfil, int ncol) {
     return count;
 }
 
-int ValoraPosicioCPU (char m[N][M], int nfil, int ncol) {
-    
-    int p1=PuntsPosicioJug(m,1,nfil,ncol);
-    int p2=PuntsPosicioJug(m,2,nfil,ncol);
+int ValoraPosicioCPU (char m[N][M]) {
+
+    int p1=PuntsPosicioJug(m,1);
+    int p2=PuntsPosicioJug(m,2);
 
     return p2-p1;
 }
@@ -499,6 +502,7 @@ void JugadaHuma(char m[N][M], int *njug, int *nfil, int *ncol) {
     }
 }
 
+
 void AnalitzaFills (char m[N][M], char v[M], int *n) {
     int count = 0;
     for (int j=0;j<M;j++) {
@@ -514,7 +518,7 @@ Node* creaNode(Node *pare,int numDeFill, int njug, int k, int nivells) {
 	Node *p=malloc(sizeof(Node));
     CopiaTauler(pare->tauler, p->tauler);
 	ColocaFitxa(p->tauler,numDeFill+1, njug, &(p->nfil), &(p->ncol));
-	p->valor=ValoraPosicioCPU(p->tauler,p->nfil,p->ncol);
+	p->valor=ValoraPosicioCPU(p->tauler);
 	if(k < nivells - 1) {
         OmpleCharDeZeros(p->v_fills);
         int n;
@@ -584,6 +588,7 @@ void ModeNormalUnNivell(Node *p, int *njug) {
     CambiaJug(njug);
 }
 
+
 void RecorreArbreRec(Node *p, int nivells, int n) {
     if(n==nivells || p->n_fills==0) {
         return;
@@ -599,15 +604,16 @@ void RecorreArbreRec(Node *p, int nivells, int n) {
 }
 
 void ModeDificilMinMax(Node *p, int *njug, int nivells) {
+    Node a = *p;
     int k=0;
     CreaArbreRec(p,k,nivells);
     int index;
-    if(GuanyemSegMov(*p)!=0) index=GuanyemSegMov(*p);
-    else { 
+    if(p->nfil==-1) {
+        index=rand() % M;
+    }
+    else if(GuanyemSegMov(*p)!=0) index=GuanyemSegMov(*p);
+    else {
         RecorreArbreRec(p,nivells,0);
-        for (int i=0; i<M; i++) {
-        if (p->fills[i] != NULL) printf("Columna %d: valor %d\n", i+1, p->fills[i]->valor);
-        }
         index = TrobaMaximIndex(*p);
     }
 
