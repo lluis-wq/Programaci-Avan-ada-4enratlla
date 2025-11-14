@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <time.h>
-#define N 10
-#define M 10
+#define N 8
+#define M 8
 #define NENRATLLA 4
 
 typedef struct node {
@@ -50,6 +50,13 @@ void CopiaTauler(char m[N][M], char n[N][M]) {
     }
 }
 
+void CopiaParcialNode(Node *p, Node *a) {
+    CopiaTauler(p->tauler,a->tauler);
+    a->nfil=p->nfil;
+    a->ncol=p->ncol;
+    a->valor=p->valor;
+}
+
 void ImprimeixTauler(char m[N][M]) {
     printf("Imprimim tauler...\n");
     char t[N][M];
@@ -75,6 +82,7 @@ void ImprimeixTauler(char m[N][M]) {
     }
     printf(" \n\n");
 }
+
 
 int TrobaMaximIndex(Node p) {
     int index;
@@ -120,6 +128,7 @@ int TrobaMinimValor(Node p) {
     int valor=INT_MAX;
     for (int i=0;i<M;i++) {
         if(p.fills[i]!=NULL) {
+            // printf("Valor:%d\n",p.fills[i]->valor);
             if(p.fills[i]->valor <= valor) {
                 valor = p.fills[i]->valor;
             }
@@ -137,7 +146,7 @@ int GuanyemSegMov(Node p) {
             }
         }
     }
-    return 0;
+    return -1;
 }
 
 int LlegirEnter (int *n) {
@@ -291,7 +300,6 @@ int kEnDiagonalDecreixent (char m[N][M], int njug, int nfil, int ncol, int k, in
 }
 
 int AcabaPartida(char m[N][M], int njug, int nfil, int ncol) {
-    CambiaJug(&njug);
     int extra1;
     int extra2;
 
@@ -429,10 +437,6 @@ int PuntsPosicioJug (char m[N][M], int njug) {
     for (int i=0;i<N;i++) {
         for(int j=0;j<M;j++){
             if(m[i][j]==njug) {
-                int resultat = AcabaPartida(m,3-njug,i+1,j+1);
-                if(resultat == njug) return INT_MAX;
-                else if(resultat == 3-njug) return INT_MIN;
-                else if(resultat ==3) return 0;
                 ValoraColumna(m,njug,i,j,&count);
                 ValoraFila(m,njug,i,j,&count);
                 ValoraDiagonalCreixent(m,njug,i,j,&count);
@@ -443,7 +447,11 @@ int PuntsPosicioJug (char m[N][M], int njug) {
     return count;
 }
 
-int ValoraPosicioCPU (char m[N][M]) {
+int ValoraPosicioCPU (char m[N][M], int njug, int nfil, int ncol) {
+    int resultat = AcabaPartida(m,njug,nfil,ncol);
+    if(resultat == 3) return 0;
+    else if(resultat == 1 && njug == 1) return INT_MIN;
+    else if(resultat == 2 && njug == 2) return INT_MAX; 
 
     int p1=PuntsPosicioJug(m,1);
     int p2=PuntsPosicioJug(m,2);
@@ -498,7 +506,6 @@ void JugadaHuma(char m[N][M], int *njug, int *nfil, int *ncol) {
         ColocaFitxa(m,x,*njug,nfil,ncol);
         ImprimeixTauler(m);
         MissatgeColocaFitxa(*njug,*nfil,*ncol);
-        CambiaJug(njug);
     }
 }
 
@@ -514,11 +521,42 @@ void AnalitzaFills (char m[N][M], char v[M], int *n) {
     *n = count;
 }
 
+// ================================================================
+// ===== DEPURACIÓN DE CREACIÓN DE ÁRBOL MINMAX ===================
+// ================================================================
+
+void ImprimeTableroDebug(char m[N][M]) {
+    for (int i = N - 1; i >= 0; i--) {
+        printf("  ");
+        for (int j = 0; j < M; j++) {
+            if (m[i][j] == 0) printf(". ");
+            else if (m[i][j] == 1) printf("X ");
+            else if (m[i][j] == 2) printf("O ");
+        }
+        printf("\n");
+    }
+    printf("  ");
+    for (int j = 0; j < M; j++) printf("%d ", j + 1);
+    printf("\n\n");
+}
+
+void DebugNodo(Node *p, int k, int njug, int numDeFill) {
+    printf("------------------------------------------------------\n");
+    printf("NIVEL: %d | COLUMNA: %d | JUGADOR: %d | VALOR: %d\n",
+           k, numDeFill + 1, njug, p->valor);
+    printf("TABLERO RESULTANTE:\n");
+    ImprimeTableroDebug(p->tauler);
+    printf("------------------------------------------------------\n\n");
+}
+
+
+
 Node* creaNode(Node *pare,int numDeFill, int njug, int k, int nivells) {
 	Node *p=malloc(sizeof(Node));
     CopiaTauler(pare->tauler, p->tauler);
 	ColocaFitxa(p->tauler,numDeFill+1, njug, &(p->nfil), &(p->ncol));
-	p->valor=ValoraPosicioCPU(p->tauler);
+	p->valor=ValoraPosicioCPU(p->tauler,njug,p->nfil,p->ncol);
+    // if(k<2) DebugNodo(p,k,njug,numDeFill);
 	if(k < nivells - 1) {
         OmpleCharDeZeros(p->v_fills);
         int n;
@@ -564,7 +602,23 @@ void ModeFacilRandom (Node *p, int *njug) {
     ColocaFitxa(p->tauler,r,2,&(p->nfil),&(p->ncol));
     ImprimeixTauler(p->tauler);
     MissatgeColocaFitxa(*njug,p->nfil,p->ncol);
-    CambiaJug(njug);
+}
+
+void AlliberaArbreRec(Node *p) {
+    if(p==NULL) return;
+    if(p->fills != NULL) {
+        for (int i=0;i<M;i++) {
+            if(p->fills[i]!=NULL) AlliberaArbreRec(p->fills[i]);
+        }
+        free(p->fills);
+    }
+    free(p);
+}
+
+void AlliberaArbreRecSensePareNiIndex(Node *p, int index) {
+    for(int i=0;i<M;i++) {
+        if(i!=index && p->fills[i]!=NULL) AlliberaArbreRec(p->fills[i]);
+    }
 }
 
 int TriaNodeUnNivell(Node *a) {
@@ -582,45 +636,76 @@ void ModeNormalUnNivell(Node *p, int *njug) {
     int nivells=1;
     CreaArbreRec(p,k,nivells);
     int index = TriaNodeUnNivell(p);
-    *p=*(p->fills[index]);
+    Node *a = p->fills[index];
+    AlliberaArbreRecSensePareNiIndex(p,index);
+    CopiaParcialNode(a,p);
+    free(p->fills);
+    free(a);
+    p->n_fills=0;
+    p->fills=NULL;
     ImprimeixTauler(p->tauler);
     MissatgeColocaFitxa(*njug,p->nfil,p->ncol);
-    CambiaJug(njug);
 }
 
-
-void RecorreArbreRec(Node *p, int nivells, int n) {
+/* void RecorreArbreRec(Node *p, int nivells, int n) {
     if(n==nivells || p->n_fills==0) {
         return;
     }
     for(int i=0; i<M; i++) {
             if(p->fills[i]!=NULL) RecorreArbreRec(p->fills[i],nivells,n+1);
-        }
-    if(n>0) {
-        if(n%2 == 1) p->valor=TrobaMinimValor(*p);
-        else p->valor=TrobaMaximValor(*p);
     }
+    
+    if(n%2 == 1) {
+        int min = TrobaMinimValor(*p);
+        if(min!=INT_MAX) p->valor=min;
+    }
+    else {
+        int max=TrobaMaximValor(*p);
+        if(max!=INT_MAX) p->valor=max;
+    }
+} */
 
+void RecorreArbreRec(Node *p,int n) {
+    if(p->n_fills==0) {
+        return;
+    }
+    for(int i=0; i<M; i++) {
+        if(p->fills[i]!=NULL && p->fills[i]->valor!=INT_MAX && p->fills[i]->valor!=INT_MIN) RecorreArbreRec(p->fills[i],n+1);
+    }
+    if(n%2 == 1) {
+        int min = TrobaMinimValor(*p);
+        p->valor=min;
+    }
+    else {
+        int max=TrobaMaximValor(*p);
+        p->valor=max;
+    }
 }
 
+
 void ModeDificilMinMax(Node *p, int *njug, int nivells) {
-    Node a = *p;
     int k=0;
     CreaArbreRec(p,k,nivells);
     int index;
     if(p->nfil==-1) {
         index=rand() % M;
     }
-    else if(GuanyemSegMov(*p)!=0) index=GuanyemSegMov(*p);
+    else if(GuanyemSegMov(*p)!=-1) index=GuanyemSegMov(*p);
     else {
-        RecorreArbreRec(p,nivells,0);
+        RecorreArbreRec(p,0);
+        for(int i=0; i<M;i++) {
+        }
         index = TrobaMaximIndex(*p);
     }
-
-    *p=*(p->fills[index]);
+    Node *a = p->fills[index];
+    AlliberaArbreRecSensePareNiIndex(p,index);
+    CopiaParcialNode(a,p);
+    free(p->fills);
+    free(a);
+    p->n_fills=0;
+    p->fills=NULL;
     ImprimeixTauler(p->tauler);
     MissatgeColocaFitxa(*njug,p->nfil,p->ncol);
-    CambiaJug(njug);
 }
 
 void JugadaCPU(Node *a, int *njug, int dificultat) {
@@ -646,30 +731,33 @@ void InicialitzaNode(Node *p) {
     OmpleTaulerDeZeros(p->tauler);
     p->nfil=-1;
     p->valor = 0;
+    p->fills = NULL;
+    p->n_fills=0;
 }
 
 void JugaPartida(Node *a, int *njug, int dificultat) {
-    printf("El jugador huma juga amb creus 'x' i la CPU amb cercles 'o'.\n\nInicia la partida:\n\n");
+    printf("NOTA: El jugador huma juga amb creus 'x' i la CPU amb cercles 'o'.\n\nINICIA LA PARTIDA:\n\n");
     while (1){
         if(*njug==1) JugadaHuma(a->tauler,njug,&(a->nfil),&(a->ncol));
         else if(*njug==2) JugadaCPU(a,njug,dificultat);
         if (AcabaPartida(a->tauler,*njug,a->nfil,a->ncol)!=0) break;
+        CambiaJug(njug);
     }
 }
 
-void FinalitzaPartida(Node a, int njug) {
-    CambiaJug(&njug);
-    if (AcabaPartida(a.tauler,njug,a.nfil,a.ncol)== 3) printf("Empat, no queden casilles lliures.\n");
+void FinalitzaPartida(Node *a, int njug) {
+    if (AcabaPartida(a->tauler,njug,a->nfil,a->ncol)== 3) printf("Empat, no queden casilles lliures.\n");
     else if (njug==1) printf("Ha guanyat el jugador huma.\n");
     else printf("Ha guanyat la CPU\n");
+    free(a);
 }
 
 int main(){
-    Node a;
-    InicialitzaNode(&a);
+    Node *a = malloc(sizeof(Node));
+    InicialitzaNode(a);
     int dificultat = TriaModeDificultat();
     int njug=CaraoCreuInicial();
-    JugaPartida(&a,&njug,dificultat);
+    JugaPartida(a,&njug,dificultat);
 
     FinalitzaPartida(a,njug);
 
