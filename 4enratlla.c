@@ -199,9 +199,33 @@ int CaraoCreuInicial () {
     else return 2;
 }
 
+int TriaMode() {
+    int x,y;
+    printf("Quin mode de joc vols jugar?\n\n   1 - Huma vs Huma\n   2 - Huma vs CPU\n\n");
+     while (1) {
+        printf("Escriu 1 si vols el Mode Huma vs Huma i 2 si vols el Mode Huma vs CPU: ");
+        y=LlegirEnter(&x);
+
+        if(y==1) {
+            if (x==1) {
+                printf("\nHas escollit el Mode Huma vs Huma.\n\n");
+                break;
+            }
+            else if (x==2) {
+                printf("\nHas escollit el Mode Huma vs CPU.\n\n");
+                break;
+            }
+            else printf("No has introduit 1 o 2.\n\n");
+        }
+        else if (y==-1) printf("Error: No has introduit un enter.\n\n");
+        else if (y==0) printf("Error de lectura.\n");
+    }
+    return x;
+}
+
 int TriaModeDificultat() {
-    int x,y,z;
-    printf("Quin mode de dificultat vols per a la CPU?\n\n   - Facil\n   - Normal\n   - Dificil\n   - Impossible\n\n");
+    int x,y;
+    printf("Quin mode de dificultat vols per a la CPU?\n\n   1 - Facil\n   2 - Normal\n   3 - Dificil\n   4 - Impossible\n\n");
     while (1) {
         printf("Escriu 1 si vols el Mode Facil, 2 si vols el Mode Normal, 3 si vols el Mode Dificil i 4 si vols el Mode Impossible: ");
         y=LlegirEnter(&x);
@@ -500,7 +524,7 @@ void JugadaHuma(char m[N][M], int *njug, int *nfil, int *ncol) {
         else if(y==1) break;
     }
 
-    if (ComprobacioColumna(m,x)==-1) printf("Error: Columna fora del rang (1-%d).\n\n",N);
+    if (ComprobacioColumna(m,x)==-1) printf("Error: Columna fora del rang (1-%d).\n\n",M);
     else if (ComprobacioColumna(m,x)==0) printf("Error: La columna esta plena.\n\n");
     else if (ComprobacioColumna(m,x)==1) {
         ColocaFitxa(m,x,*njug,nfil,ncol);
@@ -647,24 +671,6 @@ void ModeNormalUnNivell(Node *p, int *njug) {
     MissatgeColocaFitxa(*njug,p->nfil,p->ncol);
 }
 
-/* void RecorreArbreRec(Node *p, int nivells, int n) {
-    if(n==nivells || p->n_fills==0) {
-        return;
-    }
-    for(int i=0; i<M; i++) {
-            if(p->fills[i]!=NULL) RecorreArbreRec(p->fills[i],nivells,n+1);
-    }
-    
-    if(n%2 == 1) {
-        int min = TrobaMinimValor(*p);
-        if(min!=INT_MAX) p->valor=min;
-    }
-    else {
-        int max=TrobaMaximValor(*p);
-        if(max!=INT_MAX) p->valor=max;
-    }
-} */
-
 void RecorreArbreRec(Node *p,int n) {
     if(p->n_fills==0) {
         return;
@@ -735,7 +741,7 @@ void InicialitzaNode(Node *p) {
     p->n_fills=0;
 }
 
-void JugaPartida(Node *a, int *njug, int dificultat) {
+void JugaPartidaHumavsCPU(Node *a, int *njug, int dificultat) {
     printf("NOTA: El jugador huma juga amb creus 'x' i la CPU amb cercles 'o'.\n\nINICIA LA PARTIDA:\n\n");
     while (1){
         if(*njug==1) JugadaHuma(a->tauler,njug,&(a->nfil),&(a->ncol));
@@ -745,21 +751,65 @@ void JugaPartida(Node *a, int *njug, int dificultat) {
     }
 }
 
-void FinalitzaPartida(Node *a, int njug) {
+void FinalitzaPartidaHumavsCPU(Node *a, int njug) {
     if (AcabaPartida(a->tauler,njug,a->nfil,a->ncol)== 3) printf("Empat, no queden casilles lliures.\n");
     else if (njug==1) printf("Ha guanyat el jugador huma.\n");
     else printf("Ha guanyat la CPU\n");
     free(a);
 }
 
-int main(){
+void FinalitzaPartidaHumavsHuma(Node *a, int njug) {
+    if (AcabaPartida(a->tauler,njug,a->nfil,a->ncol)== 3) printf("Empat, no queden casilles lliures.\n");
+    else printf("Ha guanyat el jugador %d.\n",njug);
+    free(a);
+}
+
+void JugadaHumavsHuma(char m[N][M],int *njug, int *nfil, int *ncol) {
+    int x,y;
+    while (1) {
+        printf("Juga el Jugador %d\n\nEn quina columna vols posar la ficha (de la 1 a la %d): ",*njug,M);
+        y = LlegirEnter(&x);
+        if(y==0) printf("Error de lectura.\n");
+        else if(y==-1) printf("Error: Columna no valida. Es necessari introduir un unic enter.\n\n");
+        else if(y==1) break;
+    }
+
+    if (ComprobacioColumna(m,x)==-1) printf("Error: Columna fora del rang (1-%d).\n\n",M);
+    else if (ComprobacioColumna(m,x)==0) printf("Error: La columna esta plena.\n\n");
+    else if (ComprobacioColumna(m,x)==1) {
+        ColocaFitxa(m,x,*njug,nfil,ncol);
+        ImprimeixTauler(m);
+        printf("Ficha colocada a la casella (%d,%d) .\n\n", *nfil,*ncol);
+    }
+}
+
+void JugaPartidaHumavsHuma(char m[N][M], int *njug, int *nfil, int *ncol) {
+    printf("NOTA: El jugador 1 juga amb creus 'x' i el jugador 2 amb cercles 'o'.\n\nINICIA LA PARTIDA:\n\n");
+    while(1) {
+        JugadaHumavsHuma(m,njug,nfil,ncol);
+        if(AcabaPartida(m,*njug,*nfil,*ncol)!=0) break;
+        CambiaJug(njug);
+    }
+}
+
+void InicialitzaPartida() {
     Node *a = malloc(sizeof(Node));
     InicialitzaNode(a);
-    int dificultat = TriaModeDificultat();
-    int njug=CaraoCreuInicial();
-    JugaPartida(a,&njug,dificultat);
+    int mode = TriaMode();
+    if(mode == 1) {
+        int njug=1;
+        JugaPartidaHumavsHuma(a->tauler, &njug, &(a->nfil), &(a->ncol));
+        FinalitzaPartidaHumavsHuma(a,njug);
+    }
+    else {
+        int dificultat = TriaModeDificultat();
+        int njug=CaraoCreuInicial();
+        JugaPartidaHumavsCPU(a,&njug,dificultat);
+        FinalitzaPartidaHumavsCPU(a,njug);
+    }
+}
 
-    FinalitzaPartida(a,njug);
-
+int main(){
+    InicialitzaPartida();
     return 0;
 }
