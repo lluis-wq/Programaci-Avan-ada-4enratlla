@@ -86,17 +86,41 @@ void ImprimeixTauler(char m[N][M]) {
 
 
 void TrobaMaximIndexValor(Node *p, int *index) {
+    int valor;
+    int count = 0;
+    for (int i=0;i<M;i++) {
+        if(p->fills[i]!=NULL) {
+            if(count == 0) {
+                *index = i;
+                valor = p->fills[i]->valor;
+                count = 1;
+            }
+
+            if(p->fills[i]->valor > valor) {
+                *index = i;
+                valor = p->fills[i]->valor;
+            }
+            else if(p->fills[i]->valor = valor) {
+                if(p->fills[i]->profunditat < p->fills[*index]->profunditat) {
+                    *index = i;
+                }
+            }
+        }
+    }
+    p->valor = valor;
+} 
+
+/* void TrobaMaximIndexValor(Node *p, int *index) {
     int valor=INT_MIN;
     for (int i=0;i<M;i++) {
         if(p->fills[i]!=NULL) {
-            if(p->fills[i]->valor >= valor) {
+            if(p->fills[i]->valor > valor) {
                 *index = i;
                 valor = p->fills[i]->valor;
             }
         }
     }
-    p->valor = valor;
-}
+} */
 
 void TrobaMinimIndexValor(Node *p, int *index) {
     int valor=INT_MAX;
