@@ -14,6 +14,7 @@ typedef struct node {
 	int valor;
     int nfil;
     int ncol;
+    int profunditat;
 } Node;
 
 void OmpleCharDeZeros(char m[M]) {
@@ -84,57 +85,40 @@ void ImprimeixTauler(char m[N][M]) {
 }
 
 
-int TrobaMaximIndex(Node p) {
-    int index;
+void TrobaMaximIndexValor(Node *p, int *index) {
     int valor=INT_MIN;
     for (int i=0;i<M;i++) {
-        if(p.fills[i]!=NULL) {
-            if(p.fills[i]->valor >= valor) {
-                index = i;
-                valor = p.fills[i]->valor;
+        if(p->fills[i]!=NULL) {
+            if(p->fills[i]->valor >= valor) {
+                *index = i;
+                valor = p->fills[i]->valor;
             }
         }
     }
-    return index;
+    p->valor = valor;
 }
 
-int TrobaMinimIndex(Node p) {
-    int index;
+void TrobaMinimIndexValor(Node *p, int *index) {
     int valor=INT_MAX;
     for (int i=0;i<M;i++) {
-        if(p.fills[i]!=NULL) {
-            if(p.fills[i]->valor <= valor) {
-                index = i;
-                valor = p.fills[i]->valor;
+        if(p->fills[i]!=NULL) {
+            if(p->fills[i]->valor <= valor) {
+                *index = i;
+                valor = p->fills[i]->valor;
             }
         }
     }
-    return index;
+    p->valor = valor;
 }
 
-int TrobaMaximValor(Node p) {
-    int valor=INT_MIN;
-    for (int i=0;i<M;i++) {
-        if(p.fills[i]!=NULL) {
-            if(p.fills[i]->valor >= valor) {
-                valor = p.fills[i]->valor;
-            }
+void TrobaMinimaProfunditat(Node *p) {
+    int valor = INT_MAX;
+    for(int i=0; i<M;i++) {
+        if(p->fills[i]!=NULL) {
+            if(p->fills[i]->profunditat!=0 && p->fills[i]->profunditat<=valor) valor = p->fills[i]->profunditat;
         }
     }
-    return valor;
-}
-
-int TrobaMinimValor(Node p) {
-    int valor=INT_MAX;
-    for (int i=0;i<M;i++) {
-        if(p.fills[i]!=NULL) {
-            // printf("Valor:%d\n",p.fills[i]->valor);
-            if(p.fills[i]->valor <= valor) {
-                valor = p.fills[i]->valor;
-            }
-        }
-    }
-    return valor;
+    if(valor != INT_MAX) p->profunditat = valor;
 }
 
 int GuanyemSegMov(Node p) {
@@ -165,7 +149,7 @@ int LlegirEnter (int *n) {
 
 int CaraoCreuInicial () {
 
-    printf("Juguem a cara o creu per veure qui juga primer. \n\n");
+    printf("\nJuguem a cara o creu per veure qui juga primer. \n\n");
     int x,y;
 
     srand(time(NULL));
@@ -545,42 +529,14 @@ void AnalitzaFills (char m[N][M], char v[M], int *n) {
     *n = count;
 }
 
-// ================================================================
-// ===== DEPURACIÓN DE CREACIÓN DE ÁRBOL MINMAX ===================
-// ================================================================
-
-void ImprimeTableroDebug(char m[N][M]) {
-    for (int i = N - 1; i >= 0; i--) {
-        printf("  ");
-        for (int j = 0; j < M; j++) {
-            if (m[i][j] == 0) printf(". ");
-            else if (m[i][j] == 1) printf("X ");
-            else if (m[i][j] == 2) printf("O ");
-        }
-        printf("\n");
-    }
-    printf("  ");
-    for (int j = 0; j < M; j++) printf("%d ", j + 1);
-    printf("\n\n");
-}
-
-void DebugNodo(Node *p, int k, int njug, int numDeFill) {
-    printf("------------------------------------------------------\n");
-    printf("NIVEL: %d | COLUMNA: %d | JUGADOR: %d | VALOR: %d\n",
-           k, numDeFill + 1, njug, p->valor);
-    printf("TABLERO RESULTANTE:\n");
-    ImprimeTableroDebug(p->tauler);
-    printf("------------------------------------------------------\n\n");
-}
-
-
-
 Node* creaNode(Node *pare,int numDeFill, int njug, int k, int nivells) {
 	Node *p=malloc(sizeof(Node));
     CopiaTauler(pare->tauler, p->tauler);
 	ColocaFitxa(p->tauler,numDeFill+1, njug, &(p->nfil), &(p->ncol));
 	p->valor=ValoraPosicioCPU(p->tauler,njug,p->nfil,p->ncol);
-    // if(k<2) DebugNodo(p,k,njug,numDeFill);
+    if(p->valor == INT_MAX) p->profunditat = k+1;
+    else if(p->valor == INT_MIN) p->profunditat = -k-1;
+    else p->profunditat = 0;
 	if(k < nivells - 1) {
         OmpleCharDeZeros(p->v_fills);
         int n;
@@ -651,7 +607,7 @@ int TriaNodeUnNivell(Node *a) {
     if(a->nfil==-1) {
         index=rand() % M;
     }
-    else index = TrobaMaximIndex(*a);
+    TrobaMaximIndexValor(a,&index);
     return index;
 }
 
@@ -676,45 +632,67 @@ void RecorreArbreRec(Node *p,int n) {
         return;
     }
     for(int i=0; i<M; i++) {
-        if(p->fills[i]!=NULL && p->fills[i]->valor!=INT_MAX && p->fills[i]->valor!=INT_MIN) RecorreArbreRec(p->fills[i],n+1);
-    }
+        if(p->fills[i]!=NULL && p->fills[i]->valor!=INT_MAX && p->fills[i]->valor!=INT_MIN) {
+            RecorreArbreRec(p->fills[i],n+1);
+        }
+    }   
     if(n%2 == 1) {
-        int min = TrobaMinimValor(*p);
-        p->valor=min;
+        int extra;
+        TrobaMinimIndexValor(p,&extra);
+        TrobaMinimaProfunditat(p);
     }
     else {
-        int max=TrobaMaximValor(*p);
-        p->valor=max;
+        int extra;
+        TrobaMaximIndexValor(p,&extra);
+        TrobaMinimaProfunditat(p);
+    }
+}
+
+int PrimerMovimentCPUDificil () {
+    if(M <= (2*(NENRATLLA-1)) && M%2 == 0) {
+        int r = rand() % 2;
+        return r + M/2 - 1;
+    }        
+    else if (M <= (2*(NENRATLLA-1)) && M%2 != 0) {
+        return (M-1)/2;
+    }
+    else { 
+        int r=rand() % (M - 2*(NENRATLLA-1));
+        printf("%d\n",r);
+        return r + (NENRATLLA-1);
     }
 }
 
 
 void ModeDificilMinMax(Node *p, int *njug, int nivells) {
-    int k=0;
-    CreaArbreRec(p,k,nivells);
     int index;
     if(p->nfil==-1) {
-        index=rand() % M;
+        index = PrimerMovimentCPUDificil();
+        ColocaFitxa(p->tauler,index+1,*njug,&(p->nfil),&(p->ncol));
     }
-    else if(GuanyemSegMov(*p)!=-1) index=GuanyemSegMov(*p);
     else {
-        RecorreArbreRec(p,0);
-        for(int i=0; i<M;i++) {
+        int k=0;
+        CreaArbreRec(p,k,nivells);
+        if(GuanyemSegMov(*p)!=-1) index=GuanyemSegMov(*p);
+        else {
+            RecorreArbreRec(p,0);
+            printf("Valor Despres MinMax: %d\n",p->valor);
+            TrobaMaximIndexValor(p,&index);
         }
-        index = TrobaMaximIndex(*p);
+        Node *a = p->fills[index];
+        AlliberaArbreRecSensePareNiIndex(p,index);
+        CopiaParcialNode(a,p);
+        free(p->fills);
+        free(a);
+        p->n_fills=0;
+        p->fills=NULL;
     }
-    Node *a = p->fills[index];
-    AlliberaArbreRecSensePareNiIndex(p,index);
-    CopiaParcialNode(a,p);
-    free(p->fills);
-    free(a);
-    p->n_fills=0;
-    p->fills=NULL;
     ImprimeixTauler(p->tauler);
     MissatgeColocaFitxa(*njug,p->nfil,p->ncol);
 }
 
-void JugadaCPU(Node *a, int *njug, int dificultat) {
+void JugadaCPU(Node *a, int *njug, int dificultat, int inici) {
+    if (inici == 0) srand(time(NULL));
     printf("Torn de la CPU:\n\n");
     if(dificultat==1) {
         ModeFacilRandom(a,njug);
@@ -741,11 +719,11 @@ void InicialitzaNode(Node *p) {
     p->n_fills=0;
 }
 
-void JugaPartidaHumavsCPU(Node *a, int *njug, int dificultat) {
+void JugaPartidaHumavsCPU(Node *a, int *njug, int dificultat, int inici) {
     printf("NOTA: El jugador huma juga amb creus 'x' i la CPU amb cercles 'o'.\n\nINICIA LA PARTIDA:\n\n");
     while (1){
         if(*njug==1) JugadaHuma(a->tauler,njug,&(a->nfil),&(a->ncol));
-        else if(*njug==2) JugadaCPU(a,njug,dificultat);
+        else if(*njug==2) JugadaCPU(a,njug,dificultat,inici);
         if (AcabaPartida(a->tauler,*njug,a->nfil,a->ncol)!=0) break;
         CambiaJug(njug);
     }
@@ -792,6 +770,36 @@ void JugaPartidaHumavsHuma(char m[N][M], int *njug, int *nfil, int *ncol) {
     }
 }
 
+int PrimerJugador(int *njug) {
+    printf("Qui vols que comenci?\n");
+    int x,y;
+    while (1) {
+        printf("Escriu 1 si vols tirar primer tu, 2 si vols que comenci la CPU \
+o 3 si vols jugar a cara o creu per veure qui tira primer: ");
+        y=LlegirEnter(&x);
+
+        if(y==1) {
+            if (x==1) {
+                printf("\nHas escollit tirar primer.\n\n");
+                *njug=1;
+                return 0;
+            }
+            else if (x==2) {
+                printf("\nHas escollit que tiri primer la CPU.\n\n");
+                *njug=2;
+                return 0;
+            }
+            else if (x==3) {
+                *njug=CaraoCreuInicial();
+                return 1;
+            }
+            else printf("No has introduit 1, 2 o 3.\n\n");
+        }
+        else if (y==-1) printf("Error: No has introduit un enter.\n\n");
+        else if (y==0) printf("Error de lectura.\n");
+    }
+}
+
 void InicialitzaPartida() {
     Node *a = malloc(sizeof(Node));
     InicialitzaNode(a);
@@ -803,8 +811,9 @@ void InicialitzaPartida() {
     }
     else {
         int dificultat = TriaModeDificultat();
-        int njug=CaraoCreuInicial();
-        JugaPartidaHumavsCPU(a,&njug,dificultat);
+        int njug;
+        int inici = PrimerJugador(&njug);
+        JugaPartidaHumavsCPU(a,&njug,dificultat,inici);
         FinalitzaPartidaHumavsCPU(a,njug);
     }
 }
