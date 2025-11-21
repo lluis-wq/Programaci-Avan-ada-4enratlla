@@ -173,7 +173,7 @@ int LlegirEnter (int *n) {
 
 int CaraoCreuInicial () {
 
-    printf("\nJuguem a cara o creu per veure qui juga primer. \n\n");
+    printf("\nJuguem a cara o creu per veure qui juga primer.\n\n   1 - CARA\n   2 - CREU\n\n");
     int x,y;
 
     srand(time(NULL));
@@ -631,32 +631,6 @@ void AlliberaArbreRecSensePareNiIndex(Node *p, int index) {
     }
 }
 
-int TriaNodeUnNivell(Node *a) {
-    int index;
-    int valor=INT_MIN;
-    if(a->nfil==-1) {
-        index=rand() % M;
-    }
-    TrobaMaximIndexValor(a,&index);
-    return index;
-}
-
-void ModeNormalUnNivell(Node *p, int *njug) {
-    int k=0;
-    int nivells=1;
-    CreaArbreRec(p,k,nivells);
-    int index = TriaNodeUnNivell(p);
-    Node *a = p->fills[index];
-    AlliberaArbreRecSensePareNiIndex(p,index);
-    CopiaParcialNode(a,p);
-    free(p->fills);
-    free(a);
-    p->n_fills=0;
-    p->fills=NULL;
-    ImprimeixTauler(p->tauler);
-    MissatgeColocaFitxaHumavsCPU(*njug,p->nfil,p->ncol);
-}
-
 void RecorreArbreRec(Node *p,int n) {
     if(p->n_fills==0) {
         return;
@@ -688,7 +662,6 @@ int PrimerMovimentCPUDificil () {
     }
     else { 
         int r=rand() % (M - 2*(NENRATLLA-1));
-        printf("%d\n",r);
         return r + (NENRATLLA-1);
     }
 }
@@ -728,10 +701,11 @@ void JugadaCPU(Node *a, int *njug, int dificultat, int inici) {
         ModeFacilRandom(a,njug);
     }
     if(dificultat==2) {
-        ModeNormalUnNivell(a,njug);
+        int nivells = 2;
+        ModeDificilMinMax(a,njug,nivells);
     }
     if(dificultat==3) {
-        int nivells=2;
+        int nivells=4;
         ModeDificilMinMax(a,njug,nivells);
     }
     if(dificultat==4) {
@@ -802,7 +776,7 @@ void JugaPartidaHumavsHuma(char m[N][M], int *njug, int *nfil, int *ncol) {
 }
 
 int PrimerJugador(int *njug) {
-    printf("Qui vols que comenci?\n");
+    printf("Qui vols que comenci?\n\n   1 - Jugador Huma\n   2 - CPU\n   3 - Ho decidim a Cara o Creu\n\n");
     int x,y;
     while (1) {
         printf("Escriu 1 si vols tirar primer tu, 2 si vols que comenci la CPU \
