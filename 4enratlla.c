@@ -506,9 +506,13 @@ void ColocaFitxa(char m[N][M], int x, int njug, int *nfil, int *ncol) {
     m[*nfil-1][*ncol-1] = njug;
 }
 
-void MissatgeColocaFitxa(int njug, int nfil, int ncol) {
-    if (njug == 1) printf("El Jugador huma coloca la fitxa a la casella (%d,%d) .\n\n", nfil,ncol);
-    else printf("La CPU coloca la fitxa a la casella (%d,%d) .\n\n", nfil,ncol);
+void MissatgeColocaFitxaHumavsCPU(int njug, int nfil, int ncol) {
+    if (njug == 1) printf("El Jugador huma coloca la fitxa a la columna %d .\nPer gravetat cau a la fila %d .\n\n", ncol,nfil);
+    else printf("La CPU coloca la fitxa a la columna %d.\nPer gravetat cau a la fila %d .\n\n", ncol,nfil);
+}
+
+void MissatgeColocaFitxaHumavsHuma(int njug, int nfil, int ncol) {
+    printf("El Jugador %d coloca la fitxa a la columna %d .\nPer gravetat cau a la fila %d .\n\n", njug, ncol,nfil);
 }
 
 int ComprobacioFila(char m[N][M], int x) {
@@ -541,7 +545,7 @@ void JugadaHuma(char m[N][M], int *njug, int *nfil, int *ncol) {
     else if (ComprobacioColumna(m,x)==1) {
         ColocaFitxa(m,x,*njug,nfil,ncol);
         ImprimeixTauler(m);
-        MissatgeColocaFitxa(*njug,*nfil,*ncol);
+        MissatgeColocaFitxaHumavsCPU(*njug,*nfil,*ncol);
     }
 }
 
@@ -607,7 +611,7 @@ void ModeFacilRandom (Node *p, int *njug) {
     int r=rand() % M + 1;
     ColocaFitxa(p->tauler,r,2,&(p->nfil),&(p->ncol));
     ImprimeixTauler(p->tauler);
-    MissatgeColocaFitxa(*njug,p->nfil,p->ncol);
+    MissatgeColocaFitxaHumavsCPU(*njug,p->nfil,p->ncol);
 }
 
 void AlliberaArbreRec(Node *p) {
@@ -650,7 +654,7 @@ void ModeNormalUnNivell(Node *p, int *njug) {
     p->n_fills=0;
     p->fills=NULL;
     ImprimeixTauler(p->tauler);
-    MissatgeColocaFitxa(*njug,p->nfil,p->ncol);
+    MissatgeColocaFitxaHumavsCPU(*njug,p->nfil,p->ncol);
 }
 
 void RecorreArbreRec(Node *p,int n) {
@@ -714,7 +718,7 @@ void ModeDificilMinMax(Node *p, int *njug, int nivells) {
         p->fills=NULL;
     }
     ImprimeixTauler(p->tauler);
-    MissatgeColocaFitxa(*njug,p->nfil,p->ncol);
+    MissatgeColocaFitxaHumavsCPU(*njug,p->nfil,p->ncol);
 }
 
 void JugadaCPU(Node *a, int *njug, int dificultat, int inici) {
@@ -731,7 +735,7 @@ void JugadaCPU(Node *a, int *njug, int dificultat, int inici) {
         ModeDificilMinMax(a,njug,nivells);
     }
     if(dificultat==4) {
-        int nivells=6;
+        int nivells=7;
         ModeDificilMinMax(a,njug,nivells);
     }
 
@@ -784,7 +788,7 @@ void JugadaHumavsHuma(char m[N][M],int *njug, int *nfil, int *ncol) {
     else if (ComprobacioColumna(m,x)==1) {
         ColocaFitxa(m,x,*njug,nfil,ncol);
         ImprimeixTauler(m);
-        printf("Ficha colocada a la casella (%d,%d) .\n\n", *nfil,*ncol);
+        MissatgeColocaFitxaHumavsHuma(*njug,*nfil,*ncol);
     }
 }
 
