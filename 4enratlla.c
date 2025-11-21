@@ -100,7 +100,7 @@ void TrobaMaximIndexValor(Node *p, int *index) {
                 *index = i;
                 valor = p->fills[i]->valor;
             }
-            else if(p->fills[i]->valor = valor) {
+            else if(p->fills[i]->valor == valor) {
                 if(p->fills[i]->profunditat < p->fills[*index]->profunditat) {
                     *index = i;
                 }
@@ -226,7 +226,7 @@ int TriaMode() {
             else printf("No has introduit 1 o 2.\n\n");
         }
         else if (y==-1) printf("Error: No has introduit un enter.\n\n");
-        else if (y==0) printf("Error de lectura.\n");
+        else printf("Error de lectura.\n");
     }
     return x;
 }
@@ -258,7 +258,7 @@ int TriaModeDificultat() {
             else printf("No has introduit 1, 2, 3 o 4.\n\n");
         }
         else if (y==-1) printf("Error: No has introduit un enter.\n\n");
-        else if (y==0) printf("Error de lectura.\n");
+        else printf("Error de lectura.\n");
     }
     return x;
 }
@@ -281,6 +281,7 @@ int kEnColumna (char m[N][M], int njug, int nfil, int ncol, int k, int *ffinal) 
             return 1;
         }
     }
+    *ffinal = -1;
     return 0;
 }
 
@@ -296,6 +297,7 @@ int kEnFila (char m[N][M], int njug, int nfil, int ncol, int k, int *cfinal) {
             return 1;
         }
     }
+    *cfinal = -1;
     return 0;
 }
 
@@ -312,6 +314,8 @@ int kEnDiagonalCreixent (char m[N][M], int njug, int nfil, int ncol, int k, int 
             return 1;
         }
     }
+    *cfinal = -1;
+    *ffinal = -1;
     return 0;
 }
 
@@ -364,7 +368,7 @@ void ValoraColumna (char m[N][M], int njug, int i, int j, int *count) {
 }
 
 void ValoraFila (char m[N][M], int njug, int i, int j, int *count) {
-    int cfinal;
+    int cfinal=0;
 
     for(int t=2; t<NENRATLLA;t++) {
         if(kEnFila(m,njug,i+1,j+1,t,&cfinal)==1) {
@@ -525,7 +529,7 @@ int ComprobacioColumna (char m[N][M], int x) {
 void JugadaHuma(char m[N][M], int *njug, int *nfil, int *ncol) {
     int x,y;
     while (1) {
-        printf("Torn del Jugador huma:\n\nEn quina columna vols posar la ficha (de la 1 a la %d): ",M);
+        printf("Torn del Jugador huma:\n\nEn quina columna vols posar la fitxa (de la 1 a la %d): ",M);
         y = LlegirEnter(&x);
         if(y==0) printf("Error de lectura.\n");
         else if(y==-1) printf("Error: Columna no valida. Es necessari introduir un unic enter.\n\n");
@@ -554,15 +558,13 @@ void AnalitzaFills (char m[N][M], char v[M], int *n) {
 }
 
 Node* creaNode(Node *pare,int numDeFill, int njug, int k, int nivells) {
-	Node *p=malloc(sizeof(Node));
+	Node *p=calloc(1,sizeof(Node));
     CopiaTauler(pare->tauler, p->tauler);
 	ColocaFitxa(p->tauler,numDeFill+1, njug, &(p->nfil), &(p->ncol));
 	p->valor=ValoraPosicioCPU(p->tauler,njug,p->nfil,p->ncol);
     if(p->valor == INT_MAX) p->profunditat = k+1;
-    else if(p->valor == INT_MIN) p->profunditat = -k-1;
-    else p->profunditat = 0;
+    if(p->valor == INT_MIN) p->profunditat = -k-1;
 	if(k < nivells - 1) {
-        OmpleCharDeZeros(p->v_fills);
         int n;
         AnalitzaFills(p->tauler,p->v_fills,&n);
         p->n_fills = n;
@@ -735,12 +737,13 @@ void JugadaCPU(Node *a, int *njug, int dificultat, int inici) {
 
 }
 
-void InicialitzaNode(Node *p) {
-    OmpleTaulerDeZeros(p->tauler);
+Node* InicialitzaNode() {
+    Node *p = calloc(1,sizeof(Node));
     p->nfil=-1;
-    p->valor = 0;
+    p->ncol=-1;
     p->fills = NULL;
-    p->n_fills=0;
+
+    return p;
 }
 
 void JugaPartidaHumavsCPU(Node *a, int *njug, int dificultat, int inici) {
@@ -769,7 +772,7 @@ void FinalitzaPartidaHumavsHuma(Node *a, int njug) {
 void JugadaHumavsHuma(char m[N][M],int *njug, int *nfil, int *ncol) {
     int x,y;
     while (1) {
-        printf("Juga el Jugador %d\n\nEn quina columna vols posar la ficha (de la 1 a la %d): ",*njug,M);
+        printf("Juga el Jugador %d\n\nEn quina columna vols posar la fitxa (de la 1 a la %d): ",*njug,M);
         y = LlegirEnter(&x);
         if(y==0) printf("Error de lectura.\n");
         else if(y==-1) printf("Error: Columna no valida. Es necessari introduir un unic enter.\n\n");
@@ -820,13 +823,13 @@ o 3 si vols jugar a cara o creu per veure qui tira primer: ");
             else printf("No has introduit 1, 2 o 3.\n\n");
         }
         else if (y==-1) printf("Error: No has introduit un enter.\n\n");
-        else if (y==0) printf("Error de lectura.\n");
+        else printf("Error de lectura.\n");
     }
+    return -1;
 }
 
 void InicialitzaPartida() {
-    Node *a = malloc(sizeof(Node));
-    InicialitzaNode(a);
+    Node *a=InicialitzaNode();
     int mode = TriaMode();
     if(mode == 1) {
         int njug=1;
