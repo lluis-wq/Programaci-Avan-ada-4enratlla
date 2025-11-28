@@ -110,18 +110,6 @@ void TrobaMaximIndexValor(Node *p, int *index) {
     p->valor = valor;
 } 
 
-/* void TrobaMaximIndexValor(Node *p, int *index) {
-    int valor=INT_MIN;
-    for (int i=0;i<M;i++) {
-        if(p->fills[i]!=NULL) {
-            if(p->fills[i]->valor > valor) {
-                *index = i;
-                valor = p->fills[i]->valor;
-            }
-        }
-    }
-} */
-
 void TrobaMinimIndexValor(Node *p, int *index) {
     int valor=INT_MAX;
     for (int i=0;i<M;i++) {
@@ -535,18 +523,18 @@ void JugadaHuma(char m[N][M], int *njug, int *nfil, int *ncol) {
     while (1) {
         printf("Torn del Jugador huma:\n\nEn quina columna vols posar la fitxa (de la 1 a la %d): ",M);
         y = LlegirEnter(&x);
-        if(y==0) printf("Error de lectura.\n");
+        if(y==1) {
+            int c=ComprobacioColumna(m,x);
+            if(c==-1) printf("Error: Columna fora del rang (1-%d).\n\n",M);
+            else if(c==0) printf("Error: La columna esta plena.\n\n");
+            else break;
+        }
         else if(y==-1) printf("Error: Columna no valida. Es necessari introduir un unic enter.\n\n");
-        else if(y==1) break;
+        else printf("Error de lectura.\n");
     }
-
-    if (ComprobacioColumna(m,x)==-1) printf("Error: Columna fora del rang (1-%d).\n\n",M);
-    else if (ComprobacioColumna(m,x)==0) printf("Error: La columna esta plena.\n\n");
-    else if (ComprobacioColumna(m,x)==1) {
-        ColocaFitxa(m,x,*njug,nfil,ncol);
-        ImprimeixTauler(m);
-        MissatgeColocaFitxaHumavsCPU(*njug,*nfil,*ncol);
-    }
+    ColocaFitxa(m,x,*njug,nfil,ncol);
+    ImprimeixTauler(m);
+    MissatgeColocaFitxaHumavsCPU(*njug,*nfil,*ncol);
 }
 
 
@@ -694,7 +682,26 @@ void ModeDificilMinMax(Node *p, int *njug, int nivells) {
     MissatgeColocaFitxaHumavsCPU(*njug,p->nfil,p->ncol);
 }
 
-void JugadaCPU(Node *a, int *njug, int dificultat, int inici) {
+void CanviaNivell(int *nivellimp, int tempstotal, int nfil, int valorminmax) {
+    if(nfil != -1 && valorminmax!=INT_MAX && valorminmax!=INT_MIN) {
+        printf("Hola\n");
+        int count = 0;
+        double valor = 0.8;
+        while(1) {
+            printf("VALOR INCI BUCLE: %f\n",valor);
+            if(tempstotal > valor) break;
+            if(tempstotal <= valor) {
+                printf("VALOR ABANS DE CANVI: %f\n",valor);
+                valor = valor * valor;
+                printf("VALOR DESPRES DE CANVI: %f\n",valor);
+                count = count + 1;
+            }
+        }
+        *nivellimp = *nivellimp + count;
+    }
+}
+
+void JugadaCPU(Node *a, int *njug, int dificultat, int inici, int *nivellimp) {
     if (inici == 0) srand(time(NULL));
     printf("Torn de la CPU:\n\n");
     if(dificultat==1) {
@@ -709,10 +716,16 @@ void JugadaCPU(Node *a, int *njug, int dificultat, int inici) {
         ModeDificilMinMax(a,njug,nivells);
     }
     if(dificultat==4) {
-        int nivells=7;
-        ModeDificilMinMax(a,njug,nivells);
+        printf("EL NIVELL ABANS DE TIRAR: %d\n",*nivellimp);
+        int l = a->nfil;
+        clock_t t0 = clock();
+        ModeDificilMinMax(a,njug,*nivellimp);
+        clock_t t1 = clock();
+        double tempstotal = ((double)(t1 - t0)) / CLOCKS_PER_SEC;
+        printf("\n TEMPSTOTAL: %f\n",tempstotal);
+        CanviaNivell(nivellimp,tempstotal,l,a->valor);
+        printf("\n EL NIVELL ES: %d\n",*nivellimp);
     }
-
 }
 
 Node* InicialitzaNode() {
@@ -726,9 +739,10 @@ Node* InicialitzaNode() {
 
 void JugaPartidaHumavsCPU(Node *a, int *njug, int dificultat, int inici) {
     printf("NOTA: El jugador huma juga amb creus 'x' i la CPU amb cercles 'o'.\n\nINICIA LA PARTIDA:\n\n");
+    int nivellimp = 7; 
     while (1){
         if(*njug==1) JugadaHuma(a->tauler,njug,&(a->nfil),&(a->ncol));
-        else if(*njug==2) JugadaCPU(a,njug,dificultat,inici);
+        else if(*njug==2) JugadaCPU(a,njug,dificultat,inici,&nivellimp);
         if (AcabaPartida(a->tauler,*njug,a->nfil,a->ncol)!=0) break;
         CambiaJug(njug);
     }
